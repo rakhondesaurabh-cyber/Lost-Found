@@ -42,7 +42,7 @@ export default function Navbar() {
             {/* Brand Logo */}
             <Link to="/" className="nav-brand" onClick={handleMobileNavClick}>
               <div className="brand-icon-box">
-                <Compass size={24} />
+                <img src="/logo.svg" alt="Reconnect Logo" style={{ width: '100%', height: '100%', borderRadius: '12px' }} />
               </div>
               <span>Reconnect<span style={{ color: 'var(--primary)' }}>.</span></span>
             </Link>

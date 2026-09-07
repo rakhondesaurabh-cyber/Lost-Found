@@ -21,8 +21,8 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="footer-brand-col">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-              <div className="brand-icon-box" style={{ width: '32px', height: '32px' }}>
-                <Compass size={18} />
+              <div className="brand-icon-box" style={{ width: '34px', height: '34px' }}>
+                <img src="/logo.svg" alt="Reconnect Logo" style={{ width: '100%', height: '100%', borderRadius: '10px' }} />
               </div>
               <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem' }}>
                 Reconnect<span style={{ color: 'var(--primary)' }}>.</span>

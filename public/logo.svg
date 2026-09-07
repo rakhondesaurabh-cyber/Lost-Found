@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5722" />
+      <stop offset="100%" stop-color="#EA4335" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#EA4335" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Rounded Squircle Background -->
+  <rect x="24" y="24" width="464" height="464" rx="128" fill="url(#brandGrad)" filter="url(#glow)" />
+
+  <!-- Outer White Compass Circle Ring -->
+  <circle cx="256" cy="256" r="148" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round" />
+
+  <!-- Inner Compass Needle Shape -->
+  <path d="M 256 160 C 275 220 292 237 352 256 C 292 275 275 292 256 352 C 237 292 220 275 160 256 C 220 237 237 220 256 160 Z" 
+        fill="#FFFFFF" />
+  
+  <!-- Compass Needle Center Cutout for Depth -->
+  <path d="M 256 200 C 267 236 276 245 312 256 C 276 267 267 276 256 312 C 245 276 236 267 200 256 C 236 245 245 236 256 200 Z" 
+        fill="url(#brandGrad)" />
+</svg>
