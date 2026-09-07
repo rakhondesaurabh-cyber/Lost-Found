@@ -153,13 +153,13 @@ export default function ReportItem() {
   const isLost = type === 'lost';
 
   return (
-    <div className="container" style={{ padding: '3rem 1.5rem', maxWidth: '900px' }}>
+    <div className="container page-container" style={{ maxWidth: '900px' }}>
       {/* Top Header */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.4rem', marginBottom: '0.5rem' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2.1rem', marginBottom: '0.4rem' }}>
           Report a <span style={{ color: isLost ? '#D93025' : '#137333' }}>{isLost ? 'Lost Item' : 'Found Item'}</span>
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
           Provide clear details so our community matching algorithm can discover corresponding reports immediately.
         </p>
       </div>
@@ -285,7 +285,7 @@ export default function ReportItem() {
       )}
 
       {/* Main Report Form */}
-      <form onSubmit={handleSubmit} className="card" style={{ padding: '2.5rem', borderRadius: 'var(--radius-xl)' }}>
+      <form onSubmit={handleSubmit} className="card card-pad-lg" style={{ borderRadius: 'var(--radius-xl)' }}>
         {/* Item Title */}
         <div className="form-group">
           <label className="form-label">

@@ -111,13 +111,12 @@ export default function Dashboard() {
   const pendingReceived = claims.received.filter(c => c.status === 'PENDING').length;
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem' }}>
+    <div className="container page-container">
       {/* User Welcome Banner */}
-      <div className="card" style={{
-        padding: '2rem',
+      <div className="card card-pad-lg" style={{
         borderRadius: 'var(--radius-xl)',
         background: 'linear-gradient(135deg, #FFF5F2 0%, #FFFFFF 100%)',
-        marginBottom: '2rem',
+        marginBottom: '1.75rem',
         border: '1px solid #FFE0D6',
         display: 'flex',
         alignItems: 'center',

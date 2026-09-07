@@ -72,7 +72,7 @@ export default function BrowseItems() {
   };
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem' }}>
+    <div className="container page-container">
       {/* Page Header */}
       <div style={{
         display: 'flex',

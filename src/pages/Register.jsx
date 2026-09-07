@@ -97,33 +97,30 @@ export default function Register() {
   };
 
   return (
-    <div style={{
+    <div className="auth-page-wrap" style={{
       minHeight: 'calc(100vh - 160px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2.5rem 1.5rem',
       background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)',
       position: 'relative',
       overflow: 'hidden'
     }}>
       <BackgroundDecoration variant="auth" />
 
-      <div className="card" style={{
+      <div className="card auth-card" style={{
         maxWidth: '520px',
         width: '100%',
-        padding: '2.5rem 2rem',
-        borderRadius: 'var(--radius-xl)',
         boxShadow: 'var(--shadow-lg)',
         position: 'relative',
         zIndex: 2
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div className="brand-icon-box" style={{ width: '48px', height: '48px', margin: '0 auto 1rem auto' }}>
-            <Compass size={24} />
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div className="brand-icon-box" style={{ width: '48px', height: '48px', margin: '0 auto 0.75rem auto', padding: 0, overflow: 'hidden' }}>
+            <img src="/logo.svg" alt="Reconnect Logo" style={{ width: '100%', height: '100%', borderRadius: '14px' }} />
           </div>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '0.35rem' }}>Create an Account</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <h2 style={{ fontSize: '1.65rem', marginBottom: '0.25rem' }}>Create an Account</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
             Join the community to report items, receive alerts and reconnect
           </p>
         </div>

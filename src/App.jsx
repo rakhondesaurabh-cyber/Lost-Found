@@ -28,7 +28,7 @@ function AppContent() {
         if (window?.Capacitor?.isNativePlatform?.()) {
           const { StatusBar, Style } = await import('@capacitor/status-bar');
           const { SplashScreen: CapSplashScreen } = await import('@capacitor/splash-screen');
-          
+
           await StatusBar.setStyle({ style: Style.Dark });
           await StatusBar.setBackgroundColor({ color: '#FAF9F6' });
           await CapSplashScreen.hide();

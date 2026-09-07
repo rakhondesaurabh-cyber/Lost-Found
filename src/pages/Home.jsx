@@ -69,12 +69,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section with Animated Background SVGs */}
-      <section className="hero-section-relative" style={{
-        background: 'linear-gradient(180deg, #FFF6F3 0%, #FAF9F6 100%)',
-        padding: '5rem 0 4rem 0',
-        borderBottom: '1px solid var(--border-light)',
-        textAlign: 'center'
-      }}>
+      <section className="hero-section-relative hero-section">
         {/* Background SVG Layer */}
         <BackgroundDecoration variant="hero" />
 
@@ -91,19 +86,14 @@ export default function Home() {
             color: 'var(--primary)',
             fontSize: '0.85rem',
             fontWeight: 700,
-            marginBottom: '1.5rem',
+            marginBottom: '1.25rem',
             boxShadow: '0 2px 8px rgba(255, 87, 34, 0.15)'
           }}>
             <Sparkles size={16} />
             <span>Smart AI & Community Reconnect Hub</span>
           </div>
 
-          <h1 className="hero-heading" style={{
-            fontSize: '3.4rem',
-            maxWidth: '850px',
-            margin: '0 auto 1.25rem auto',
-            letterSpacing: '-0.02em'
-          }}>
+          <h1 className="hero-heading">
             Lost something? Found something? <br />
             <span style={{
               background: 'linear-gradient(135deg, #FF5722 0%, #EA4335 100%)',
@@ -114,52 +104,39 @@ export default function Home() {
             </span>
           </h1>
 
-          <p style={{
-            fontSize: '1.15rem',
-            color: 'var(--text-secondary)',
-            maxWidth: '650px',
-            margin: '0 auto 2.5rem auto'
-          }}>
+          <p className="hero-subtitle">
             Search hundreds of lost & found reports across campus, upload pictures, and match items instantly with verified proof of ownership.
           </p>
 
           {/* Quick Dual Action Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-            maxWidth: '700px',
-            margin: '0 auto 3rem auto'
-          }}>
+          <div className="hero-action-grid">
             {/* I Lost Something Card */}
             <Link
               to="/report?type=lost"
-              className="card card-interactive"
+              className="card card-interactive hero-action-card"
               style={{
-                padding: '1.75rem',
                 textAlign: 'left',
                 border: '2px solid rgba(234, 67, 53, 0.2)',
-                background: '#FFFFFF',
-                borderRadius: 'var(--radius-xl)'
+                background: '#FFFFFF'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                 <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '16px',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '14px',
                   background: '#FEECEB',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#D93025'
                 }}>
-                  <Search size={24} />
+                  <Search size={22} />
                 </div>
                 <span className="badge badge-lost">Report Lost</span>
               </div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '0.4rem' }}>I Lost Something</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.35rem' }}>I Lost Something</h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                 Post what you lost (wallet, key, laptop) and receive alerts when someone finds it.
               </p>
               <span className="btn btn-danger btn-sm" style={{ width: '100%' }}>
@@ -170,32 +147,30 @@ export default function Home() {
             {/* I Found Something Card */}
             <Link
               to="/report?type=found"
-              className="card card-interactive"
+              className="card card-interactive hero-action-card"
               style={{
-                padding: '1.75rem',
                 textAlign: 'left',
                 border: '2px solid rgba(52, 168, 83, 0.2)',
-                background: '#FFFFFF',
-                borderRadius: 'var(--radius-xl)'
+                background: '#FFFFFF'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                 <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '16px',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '14px',
                   background: '#E6F4EA',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#137333'
                 }}>
-                  <PlusCircle size={24} />
+                  <PlusCircle size={22} />
                 </div>
                 <span className="badge badge-found">Report Found</span>
               </div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '0.4rem' }}>I Found Something</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.35rem' }}>I Found Something</h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                 Found an item? Post details and safely reunite it with its rightful owner.
               </p>
               <span className="btn btn-success btn-sm" style={{ width: '100%' }}>
@@ -205,7 +180,7 @@ export default function Home() {
           </div>
 
           {/* Google-Style Floating Search Bar */}
-          <div style={{ maxWidth: '750px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '750px', margin: '0 auto', width: '100%' }}>
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -218,46 +193,41 @@ export default function Home() {
       </section>
 
       {/* Live Platform Stats */}
-      <section style={{ padding: '2.5rem 0', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-light)' }}>
+      <section className="stats-section">
         <div className="container">
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1.5rem',
-            textAlign: 'center'
-          }}>
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontSize: '2.4rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'Outfit' }}>
+          <div className="stats-grid-mobile stats-grid-desktop">
+            <div className="stats-item-box">
+              <div className="stats-item-number" style={{ color: 'var(--primary)' }}>
                 {stats.totalReports}
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              <div className="stats-item-label">
                 Total Reports Filed
               </div>
             </div>
 
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontSize: '2.4rem', fontWeight: 800, color: '#D93025', fontFamily: 'Outfit' }}>
+            <div className="stats-item-box">
+              <div className="stats-item-number" style={{ color: '#D93025' }}>
                 {stats.activeLost}
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              <div className="stats-item-label">
                 Active Lost Items
               </div>
             </div>
 
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontSize: '2.4rem', fontWeight: 800, color: '#137333', fontFamily: 'Outfit' }}>
+            <div className="stats-item-box">
+              <div className="stats-item-number" style={{ color: '#137333' }}>
                 {stats.activeFound}
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              <div className="stats-item-label">
                 Active Found Items
               </div>
             </div>
 
-            <div style={{ padding: '1rem' }}>
-              <div style={{ fontSize: '2.4rem', fontWeight: 800, color: '#1A73E8', fontFamily: 'Outfit' }}>
+            <div className="stats-item-box">
+              <div className="stats-item-number" style={{ color: '#1A73E8' }}>
                 {stats.reunited} 🎉
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              <div className="stats-item-label">
                 Belongings Reunited
               </div>
             </div>
@@ -266,7 +236,7 @@ export default function Home() {
       </section>
 
       {/* Recent Lost & Found Reports Feed */}
-      <section style={{ padding: '4rem 0' }}>
+      <section className="section-pad">
         <div className="container">
           <div style={{
             display: 'flex',

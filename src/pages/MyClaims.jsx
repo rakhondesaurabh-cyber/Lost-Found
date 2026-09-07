@@ -66,10 +66,10 @@ export default function MyClaims() {
   };
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem', maxWidth: '1000px' }}>
+    <div className="container page-container" style={{ maxWidth: '1000px' }}>
       {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.2rem', marginBottom: '0.35rem' }}>Claims & Verification Hub</h1>
+      <div style={{ marginBottom: '1.75rem' }}>
+        <h1 style={{ fontSize: '2.1rem', marginBottom: '0.35rem' }}>Claims & Verification Hub</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
           Review proof messages, verify rightful owners, and securely share meetup contacts.
         </p>

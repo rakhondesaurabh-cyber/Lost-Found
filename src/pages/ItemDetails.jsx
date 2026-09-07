@@ -101,9 +101,9 @@ export default function ItemDetails() {
   if (!item) return null;
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem', maxWidth: '1100px' }}>
+    <div className="container page-container" style={{ maxWidth: '1100px' }}>
       {/* Back button & share */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <button
           onClick={() => navigate(-1)}
           className="btn btn-secondary btn-sm"
@@ -123,11 +123,10 @@ export default function ItemDetails() {
         </button>
       </div>
 
-      <div style={{
+      <div className="item-details-grid" style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
-        marginBottom: '3rem'
+        gap: '2rem',
+        marginBottom: '2.5rem'
       }}>
         {/* Left Col: Image & Status */}
         <div>
