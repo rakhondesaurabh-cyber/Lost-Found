@@ -23,6 +23,7 @@ export default function Register() {
     avatar: AVATAR_OPTIONS[0]
   });
   const [googleSigningIn, setGoogleSigningIn] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { register, googleLogin } = useAuth();
   const { addToast } = useNotification();
   const navigate = useNavigate();
