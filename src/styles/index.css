@@ -696,3 +696,199 @@ button, input, select, textarea {
     font-size: 2.2rem !important;
   }
 }
+
+/* ==========================================================================
+   Background SVG Layers & Floating Decorative Elements
+   ========================================================================== */
+
+.hero-section-relative {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-hero-svg-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-auth-svg-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-global-svg-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Glowing Ambient Radiant Blobs */
+.svg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.svg-blob-top-left {
+  width: 480px;
+  height: 480px;
+  top: -120px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(255, 87, 34, 0.28) 0%, rgba(254, 235, 230, 0.05) 70%);
+  animation: floatSlow 12s ease-in-out infinite alternate;
+}
+
+.svg-blob-top-right {
+  width: 450px;
+  height: 450px;
+  top: -80px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(251, 188, 4, 0.24) 0%, rgba(254, 247, 224, 0.05) 70%);
+  animation: floatSlow 15s ease-in-out infinite alternate-reverse;
+}
+
+.svg-blob-center-bottom {
+  width: 500px;
+  height: 350px;
+  bottom: -100px;
+  left: 30%;
+  background: radial-gradient(circle, rgba(234, 67, 53, 0.18) 0%, rgba(255, 245, 242, 0.02) 70%);
+  animation: floatSlow 18s ease-in-out infinite alternate;
+}
+
+.svg-blob-auth-1 {
+  width: 380px;
+  height: 380px;
+  top: -60px;
+  left: -80px;
+  background: radial-gradient(circle, rgba(255, 87, 34, 0.25) 0%, transparent 70%);
+  animation: floatSlow 10s ease-in-out infinite alternate;
+}
+
+.svg-blob-auth-2 {
+  width: 360px;
+  height: 360px;
+  bottom: -60px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(251, 188, 4, 0.22) 0%, transparent 70%);
+  animation: floatSlow 14s ease-in-out infinite alternate-reverse;
+}
+
+.svg-blob-global-1 {
+  width: 600px;
+  height: 600px;
+  top: 15%;
+  right: -200px;
+  background: radial-gradient(circle, rgba(255, 87, 34, 0.08) 0%, transparent 70%);
+}
+
+.svg-blob-global-2 {
+  width: 500px;
+  height: 500px;
+  bottom: 10%;
+  left: -150px;
+  background: radial-gradient(circle, rgba(251, 188, 4, 0.07) 0%, transparent 70%);
+}
+
+/* Floating SVG Shapes */
+.floating-svg {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.svg-radar-left {
+  top: 8%;
+  left: -40px;
+  animation: spinSlow 40s linear infinite, floatMedium 8s ease-in-out infinite alternate;
+}
+
+.svg-dots-right {
+  top: 12%;
+  right: 2%;
+  animation: floatMedium 10s ease-in-out infinite alternate-reverse;
+}
+
+.svg-pin-float {
+  top: 25%;
+  left: 12%;
+  opacity: 0.45;
+  animation: floatUpDown 6s ease-in-out infinite alternate;
+}
+
+.svg-sparkle-float {
+  top: 20%;
+  right: 14%;
+  opacity: 0.55;
+  animation: floatUpDown 5s ease-in-out infinite alternate-reverse, rotateSparkle 8s ease-in-out infinite;
+}
+
+.svg-compass-float {
+  bottom: 15%;
+  right: 8%;
+  opacity: 0.4;
+  animation: floatUpDown 7s ease-in-out infinite alternate;
+}
+
+/* Keyframe Animations */
+@keyframes floatSlow {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, 20px) scale(1.08);
+  }
+  100% {
+    transform: translate(-20px, -25px) scale(0.95);
+  }
+}
+
+@keyframes floatMedium {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(22px) rotate(4deg);
+  }
+}
+
+@keyframes floatUpDown {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(-6deg);
+  }
+  100% {
+    transform: translateY(6px) rotate(6deg);
+  }
+}
+
+@keyframes rotateSparkle {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

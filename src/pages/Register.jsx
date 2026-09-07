@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import BackgroundDecoration from '../components/BackgroundDecoration';
 import { Compass, Mail, Lock, User, Phone, Sparkles, Check } from 'lucide-react';
 
 const AVATAR_OPTIONS = [
@@ -94,14 +95,20 @@ export default function Register() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '2.5rem 1.5rem',
-      background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)'
+      background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      <BackgroundDecoration variant="auth" />
+
       <div className="card" style={{
         maxWidth: '520px',
         width: '100%',
         padding: '2.5rem 2rem',
         borderRadius: 'var(--radius-xl)',
-        boxShadow: 'var(--shadow-lg)'
+        boxShadow: 'var(--shadow-lg)',
+        position: 'relative',
+        zIndex: 2
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="brand-icon-box" style={{ width: '48px', height: '48px', margin: '0 auto 1rem auto' }}>

@@ -5,6 +5,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import BackgroundDecoration from './components/BackgroundDecoration';
 
 import Home from './pages/Home';
 import BrowseItems from './pages/BrowseItems';
@@ -21,6 +22,7 @@ export default function App() {
       <NotificationProvider>
         <Router>
           <div className="app-container">
+            <BackgroundDecoration />
             <Navbar />
             <main className="main-content">
               <Routes>

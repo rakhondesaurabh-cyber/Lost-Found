@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import BackgroundDecoration from '../components/BackgroundDecoration';
 import { Compass, Mail, Lock, Sparkles, ArrowRight, UserCheck } from 'lucide-react';
 
 export default function Login() {
@@ -64,14 +65,20 @@ export default function Login() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '2rem 1.5rem',
-      background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)'
+      background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      <BackgroundDecoration variant="auth" />
+
       <div className="card" style={{
         maxWidth: '460px',
         width: '100%',
         padding: '2.5rem 2rem',
         borderRadius: 'var(--radius-xl)',
-        boxShadow: 'var(--shadow-lg)'
+        boxShadow: 'var(--shadow-lg)',
+        position: 'relative',
+        zIndex: 2
       }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>

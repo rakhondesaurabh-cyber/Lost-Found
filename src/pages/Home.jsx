@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import ItemCard from '../components/ItemCard';
 import SearchBar from '../components/SearchBar';
+import BackgroundDecoration from '../components/BackgroundDecoration';
 import { CATEGORIES } from '../components/Filter';
 import {
   Compass,
@@ -67,14 +68,17 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section style={{
-        background: 'linear-gradient(180deg, #FFF5F2 0%, #FAF9F6 100%)',
-        padding: '4.5rem 0 3.5rem 0',
+      {/* Hero Section with Animated Background SVGs */}
+      <section className="hero-section-relative" style={{
+        background: 'linear-gradient(180deg, #FFF6F3 0%, #FAF9F6 100%)',
+        padding: '5rem 0 4rem 0',
         borderBottom: '1px solid var(--border-light)',
         textAlign: 'center'
       }}>
-        <div className="container">
+        {/* Background SVG Layer */}
+        <BackgroundDecoration variant="hero" />
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           {/* Beacon pill */}
           <div style={{
             display: 'inline-flex',
