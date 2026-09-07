@@ -11,57 +11,74 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('reconnect_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  });
   const [token, setToken] = useState(localStorage.getItem('reconnect_token') || null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('reconnect_token');
-      if (storedToken) {
-        try {
-          const res = await api.getMe();
-          if (res.success) {
-            setUser(res.user);
-          } else {
-            logout();
-          }
-        } catch (err) {
-          console.warn('Session expired or invalid, logging out.');
-          logout();
-        }
+    // 1. Check local session
+    const storedUser = localStorage.getItem('reconnect_user');
+    const storedToken = localStorage.getItem('reconnect_token');
+
+    if (storedUser && storedToken) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {}
+    }
+
+    // 2. Listen to Firebase auth state
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        const u = {
+          _id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email.split('@')[0],
+          email: fbUser.email,
+          avatar: fbUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(fbUser.email)}`
+        };
+        setUser(u);
+        setToken(fbUser.uid);
+        localStorage.setItem('reconnect_user', JSON.stringify(u));
+        localStorage.setItem('reconnect_token', fbUser.uid);
       }
       setLoading(false);
-    };
+    });
 
-    initializeAuth();
+    return () => unsubscribe();
   }, []);
 
   const login = async (email, password) => {
-    // Try Firebase auth if available, otherwise backend auth
+    // Try Firebase auth directly
     try {
-      const firebaseUser = await loginWithFirebase(email, password);
-      // Also authenticate with backend session
-      const backendRes = await api.googleAuth({
-        email: firebaseUser.email,
-        name: firebaseUser.name,
-        avatar: firebaseUser.avatar,
-        googleId: firebaseUser._id
-      });
+      const fbUser = await loginWithFirebase(email, password);
+      localStorage.setItem('reconnect_user', JSON.stringify(fbUser));
+      localStorage.setItem('reconnect_token', fbUser._id);
+      setUser(fbUser);
+      setToken(fbUser._id);
 
-      if (backendRes.success) {
-        localStorage.setItem('reconnect_token', backendRes.token);
-        setToken(backendRes.token);
-        setUser(backendRes.user);
-        return backendRes;
-      }
+      // Attempt optional backend sync in background without blocking
+      api.googleAuth({
+        email: fbUser.email,
+        name: fbUser.name,
+        avatar: fbUser.avatar,
+        googleId: fbUser._id
+      }).catch(() => {});
+
+      return { success: true, user: fbUser };
     } catch (fbErr) {
-      console.log('Falling back to local backend login:', fbErr.message);
+      console.log('Firebase login fallback to backend API:', fbErr.message);
     }
 
+    // Fallback to local server login
     const res = await api.login({ email, password });
     if (res.success && res.token) {
       localStorage.setItem('reconnect_token', res.token);
+      localStorage.setItem('reconnect_user', JSON.stringify(res.user));
       setToken(res.token);
       setUser(res.user);
     }
@@ -69,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
-    // Register with Firebase
+    // Try Firebase Registration directly
     try {
       const fbUser = await registerWithFirebase(
         userData.name,
@@ -79,27 +96,29 @@ export const AuthProvider = ({ children }) => {
         userData.phone
       );
 
-      const backendRes = await api.googleAuth({
+      localStorage.setItem('reconnect_user', JSON.stringify(fbUser));
+      localStorage.setItem('reconnect_token', fbUser._id);
+      setUser(fbUser);
+      setToken(fbUser._id);
+
+      // Attempt background backend sync
+      api.googleAuth({
         email: fbUser.email,
         name: fbUser.name,
         avatar: fbUser.avatar,
         phone: userData.phone,
         googleId: fbUser._id
-      });
+      }).catch(() => {});
 
-      if (backendRes.success) {
-        localStorage.setItem('reconnect_token', backendRes.token);
-        setToken(backendRes.token);
-        setUser(backendRes.user);
-        return backendRes;
-      }
+      return { success: true, user: fbUser };
     } catch (fbErr) {
-      console.log('Falling back to local backend registration:', fbErr.message);
+      console.log('Firebase register fallback to backend API:', fbErr.message);
     }
 
     const res = await api.register(userData);
     if (res.success && res.token) {
       localStorage.setItem('reconnect_token', res.token);
+      localStorage.setItem('reconnect_user', JSON.stringify(res.user));
       setToken(res.token);
       setUser(res.user);
     }
@@ -109,19 +128,20 @@ export const AuthProvider = ({ children }) => {
   const handleGoogleSignIn = async () => {
     try {
       const fbUser = await signInWithGoogle();
-      const backendRes = await api.googleAuth({
+      localStorage.setItem('reconnect_user', JSON.stringify(fbUser));
+      localStorage.setItem('reconnect_token', fbUser._id);
+      setUser(fbUser);
+      setToken(fbUser._id);
+
+      // Attempt background backend sync
+      api.googleAuth({
         email: fbUser.email,
         name: fbUser.name,
         avatar: fbUser.avatar,
         googleId: fbUser._id
-      });
+      }).catch(() => {});
 
-      if (backendRes.success) {
-        localStorage.setItem('reconnect_token', backendRes.token);
-        setToken(backendRes.token);
-        setUser(backendRes.user);
-        return backendRes;
-      }
+      return { success: true, user: fbUser };
     } catch (err) {
       console.error('Google Sign-In Error:', err);
       throw err;
@@ -135,6 +155,7 @@ export const AuthProvider = ({ children }) => {
       // ignore
     }
     localStorage.removeItem('reconnect_token');
+    localStorage.removeItem('reconnect_user');
     setToken(null);
     setUser(null);
   };
