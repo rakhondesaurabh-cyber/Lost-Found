@@ -16,10 +16,13 @@ export const getItems = (req, res) => {
   try {
     const { search, type, category, status, location, reportedBy } = req.query;
     const items = db.getItems({ search, type, category, status, location, reportedBy });
+    const currentUserId = req.user ? req.user._id : null;
+    const sanitizedItems = items.map(item => db.sanitizeItem(item, currentUserId));
+    
     return res.json({
       success: true,
-      count: items.length,
-      items
+      count: sanitizedItems.length,
+      items: sanitizedItems
     });
   } catch (error) {
     console.error('getItems error:', error);
@@ -35,12 +38,18 @@ export const getItemById = (req, res) => {
       return res.status(404).json({ success: false, message: 'Item not found or has been removed' });
     }
 
+    const currentUserId = req.user ? req.user._id : null;
+    const sanitizedItem = db.sanitizeItem(item, currentUserId);
+
     // Also compute smart potential matches for this item
-    const potentialMatches = db.findMatchesForItem(item);
+    const potentialMatches = db.findMatchesForItem(item).map(m => ({
+      ...m,
+      item: db.sanitizeItem(m.item, currentUserId)
+    }));
 
     return res.json({
       success: true,
-      item,
+      item: sanitizedItem,
       potentialMatches
     });
   } catch (error) {
@@ -51,7 +60,7 @@ export const getItemById = (req, res) => {
 
 export const createItem = (req, res) => {
   try {
-    const { title, type, category, description, imageUrl, location, date, contactPreference } = req.body;
+    const { title, type, category, description, imageUrl, location, date, contactPreference, verificationQuestions } = req.body;
 
     if (!title || !type || !category || !description || !location || !date) {
       return res.status(400).json({
@@ -62,6 +71,19 @@ export const createItem = (req, res) => {
 
     const fallbackImg = CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Others;
     const finalImageUrl = imageUrl && imageUrl.trim() !== '' ? imageUrl : fallbackImg;
+
+    // Process verification questions if provided
+    let processedVerificationQuestions = [];
+    if (Array.isArray(verificationQuestions)) {
+      processedVerificationQuestions = verificationQuestions
+        .filter(q => q && q.question && q.question.trim() !== '')
+        .map(q => ({
+          id: q.id || `vq_${uuidv4().substring(0, 6)}`,
+          question: q.question.trim(),
+          secretAnswer: (q.secretAnswer || '').trim(),
+          hint: (q.hint || '').trim()
+        }));
+    }
 
     const newItem = {
       _id: `item_${uuidv4().substring(0, 8)}`,
@@ -81,6 +103,7 @@ export const createItem = (req, res) => {
         phone: req.user.phone || ''
       },
       contactPreference: contactPreference || 'in_app',
+      verificationQuestions: processedVerificationQuestions,
       isDeleted: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -93,7 +116,7 @@ export const createItem = (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `Successfully reported ${type} item!`,
+      message: `Successfully reported ${type} item with anti-fraud protection!`,
       item: newItem,
       potentialMatchesCount: matches.length
     });
@@ -117,7 +140,7 @@ export const updateItem = (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not authorized to edit this report' });
     }
 
-    const { title, type, category, description, imageUrl, location, date, status, contactPreference } = req.body;
+    const { title, type, category, description, imageUrl, location, date, status, contactPreference, verificationQuestions } = req.body;
 
     const updates = {};
     if (title) updates.title = title.trim();
@@ -129,6 +152,16 @@ export const updateItem = (req, res) => {
     if (date) updates.date = date;
     if (status) updates.status = status.toUpperCase();
     if (contactPreference) updates.contactPreference = contactPreference;
+    if (Array.isArray(verificationQuestions)) {
+      updates.verificationQuestions = verificationQuestions
+        .filter(q => q && q.question && q.question.trim() !== '')
+        .map(q => ({
+          id: q.id || `vq_${uuidv4().substring(0, 6)}`,
+          question: q.question.trim(),
+          secretAnswer: (q.secretAnswer || '').trim(),
+          hint: (q.hint || '').trim()
+        }));
+    }
 
     const updatedItem = db.updateItem(id, updates);
 

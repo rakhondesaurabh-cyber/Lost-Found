@@ -14,7 +14,7 @@ import { protect, optionalAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', getItems);
+router.get('/', optionalAuth, getItems);
 router.get('/stats', getStats);
 router.get('/live-matches', getLiveMatches);
 router.get('/:id', optionalAuth, getItemById);

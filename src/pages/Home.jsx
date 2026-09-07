@@ -11,21 +11,26 @@ import {
   PlusCircle,
   Sparkles,
   ShieldCheck,
-  Users,
   CheckCircle2,
   ArrowRight,
-  TrendingUp,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   MapPin,
+  Calendar,
+  Tag,
   Clock,
-  HeartHandshake
+  HeartHandshake,
+  LayoutGrid
 } from 'lucide-react';
 
 export default function Home() {
-  const [stats, setStats] = useState({ totalReports: 0, activeLost: 0, activeFound: 0, reunited: 18 });
+  const [stats, setStats] = useState({ totalReports: 40, activeLost: 12, activeFound: 28, reunited: 18 });
   const [recentItems, setRecentItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'lost' | 'found'
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,8 +40,17 @@ export default function Home() {
           api.getStats(),
           api.getItems()
         ]);
-        if (statsRes.success) setStats(statsRes.stats);
-        if (itemsRes.success) setRecentItems(itemsRes.items);
+        if (statsRes.success && statsRes.stats) {
+          setStats({
+            totalReports: statsRes.stats.totalReports || 40,
+            activeLost: statsRes.stats.activeLost || 12,
+            activeFound: statsRes.stats.activeFound || 28,
+            reunited: statsRes.stats.reunited || 18
+          });
+        }
+        if (itemsRes.success && itemsRes.items) {
+          setRecentItems(itemsRes.items);
+        }
       } catch (err) {
         console.error('Failed to load home data', err);
       } finally {
@@ -64,13 +78,37 @@ export default function Home() {
     if (activeTab === 'lost') return item.type === 'lost';
     if (activeTab === 'found') return item.type === 'found';
     return true;
-  }).slice(0, 6);
+  });
+
+  // Spotlight items (up to 5 for the interactive featured carousel)
+  const spotlightItems = filteredItems.length > 0 ? filteredItems.slice(0, 5) : [];
+  const currentSpotlight = spotlightItems[spotlightIndex] || spotlightItems[0] || recentItems[0];
+
+  const handlePrevSpotlight = () => {
+    setSpotlightIndex(prev => (prev === 0 ? spotlightItems.length - 1 : prev - 1));
+  };
+
+  const handleNextSpotlight = () => {
+    setSpotlightIndex(prev => (prev === spotlightItems.length - 1 ? 0 : prev + 1));
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'CLAIMED':
+        return <span className="spotlight-badge-claim"><Sparkles size={13} /> IN CLAIM</span>;
+      case 'RETURNED':
+        return <span className="spotlight-badge-returned"><CheckCircle2 size={13} /> REUNITED</span>;
+      case 'CANCELLED':
+        return <span className="badge badge-status-cancelled">CANCELLED</span>;
+      default:
+        return <span className="spotlight-badge-active"><Clock size={13} /> ACTIVE</span>;
+    }
+  };
 
   return (
     <div>
-      {/* Hero Section with Animated Background SVGs */}
+      {/* 1. Hero Section with Beacon Pill, Dual Action Cards & Search */}
       <section className="hero-section-relative hero-section">
-        {/* Background SVG Layer */}
         <BackgroundDecoration variant="hero" />
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
@@ -192,123 +230,303 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Live Platform Stats */}
-      <section className="stats-section">
+      {/* 2. Recent Reports Section (Redesigned matching Reference Mockup) */}
+      <section className="section-pad" style={{ background: 'var(--bg-page)' }}>
         <div className="container">
-          <div className="stats-grid-mobile stats-grid-desktop">
-            <div className="stats-item-box">
-              <div className="stats-item-number" style={{ color: 'var(--primary)' }}>
-                {stats.totalReports}
-              </div>
-              <div className="stats-item-label">
-                Total Reports Filed
-              </div>
-            </div>
-
-            <div className="stats-item-box">
-              <div className="stats-item-number" style={{ color: '#D93025' }}>
-                {stats.activeLost}
-              </div>
-              <div className="stats-item-label">
-                Active Lost Items
-              </div>
-            </div>
-
-            <div className="stats-item-box">
-              <div className="stats-item-number" style={{ color: '#137333' }}>
-                {stats.activeFound}
-              </div>
-              <div className="stats-item-label">
-                Active Found Items
-              </div>
-            </div>
-
-            <div className="stats-item-box">
-              <div className="stats-item-number" style={{ color: '#1A73E8' }}>
-                {stats.reunited} 🎉
-              </div>
-              <div className="stats-item-label">
-                Belongings Reunited
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Lost & Found Reports Feed */}
-      <section className="section-pad">
-        <div className="container">
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '2rem',
-            flexWrap: 'wrap',
-            gap: '1rem'
-          }}>
+          
+          {/* Section Header & Top Right Filter Pills */}
+          <div className="recent-reports-header">
             <div>
-              <h2 style={{ fontSize: '1.9rem', marginBottom: '0.25rem' }}>Recent Reports</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              <h2 className="recent-reports-title">Recent Reports</h2>
+              <p className="recent-reports-subtitle">
                 Latest items reported on campus and nearby locations
               </p>
             </div>
 
-            {/* Tab switch */}
-            <div style={{
-              display: 'flex',
-              background: 'var(--bg-subtle)',
-              padding: '0.25rem',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--border-light)'
-            }}>
+            {/* Filter Pills on Top Right */}
+            <div className="recent-filter-pills">
               <button
-                className={`chip ${activeTab === 'all' ? 'active' : ''}`}
-                onClick={() => setActiveTab('all')}
-                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+                type="button"
+                className={`recent-filter-pill ${activeTab === 'all' ? 'active-all' : ''}`}
+                onClick={() => {
+                  setActiveTab('all');
+                  setSpotlightIndex(0);
+                }}
               >
-                All Reports
+                <LayoutGrid size={15} />
+                <span>All Reports</span>
               </button>
+
               <button
-                className={`chip ${activeTab === 'lost' ? 'active' : ''}`}
-                onClick={() => setActiveTab('lost')}
-                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+                type="button"
+                className={`recent-filter-pill ${activeTab === 'lost' ? 'active-lost' : ''}`}
+                onClick={() => {
+                  setActiveTab('lost');
+                  setSpotlightIndex(0);
+                }}
               >
-                🔴 Lost Only
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#EA4335' }}></span>
+                <span>Lost Only</span>
               </button>
+
               <button
-                className={`chip ${activeTab === 'found' ? 'active' : ''}`}
-                onClick={() => setActiveTab('found')}
-                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+                type="button"
+                className={`recent-filter-pill ${activeTab === 'found' ? 'active-found' : ''}`}
+                onClick={() => {
+                  setActiveTab('found');
+                  setSpotlightIndex(0);
+                }}
               >
-                🟢 Found Only
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#34A853' }}></span>
+                <span>Found Only</span>
               </button>
             </div>
           </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem' }}>
-              <p>Loading items...</p>
+          {/* Featured / Spotlight Showcase Card (Screenshot Layout) */}
+          {currentSpotlight && (
+            <div className="spotlight-card">
+              {/* Left Image Area */}
+              <div className="spotlight-image-container">
+                <img
+                  src={currentSpotlight.imageUrl}
+                  alt={currentSpotlight.title}
+                  className="spotlight-image"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&auto=format&fit=crop&q=80';
+                  }}
+                />
+
+                {/* Top-Left Badge (Lost / Found) */}
+                <div className="spotlight-badge-top-left">
+                  {currentSpotlight.type === 'lost' ? (
+                    <span className="spotlight-badge-lost">
+                      <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#EA4335' }}></span>
+                      LOST
+                    </span>
+                  ) : (
+                    <span className="spotlight-badge-found">
+                      <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#34A853' }}></span>
+                      FOUND
+                    </span>
+                  )}
+                </div>
+
+                {/* Top-Right Status Badge (e.g. IN CLAIM, ACTIVE, REUNITED) */}
+                <div className="spotlight-badge-top-right">
+                  {getStatusBadge(currentSpotlight.status)}
+                </div>
+
+                {/* Carousel Previous / Next Nav Buttons (Hover Reveal) */}
+                {spotlightItems.length > 1 && (
+                  <>
+                    <button
+                      className="spotlight-nav-btn spotlight-nav-prev"
+                      onClick={handlePrevSpotlight}
+                      aria-label="Previous item"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      className="spotlight-nav-btn spotlight-nav-next"
+                      onClick={handleNextSpotlight}
+                      aria-label="Next item"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+
+                {/* Bottom-Left Pagination Indicator Pill (e.g. 1/2) */}
+                <div className="spotlight-pagination-pill">
+                  {spotlightIndex + 1}/{spotlightItems.length || 1}
+                </div>
+
+                {/* Bottom-Right Carousel Dots */}
+                {spotlightItems.length > 1 && (
+                  <div className="spotlight-carousel-dots">
+                    {spotlightItems.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`spotlight-dot ${idx === spotlightIndex ? 'active' : ''}`}
+                        onClick={() => setSpotlightIndex(idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Details Area */}
+              <div className="spotlight-details">
+                <div>
+                  {/* Category Pill Tag */}
+                  <div className="spotlight-category-tag">
+                    <Tag size={15} color="var(--primary)" />
+                    <span>{currentSpotlight.category || 'Accessories'}</span>
+                  </div>
+
+                  {/* Item Title */}
+                  <h3 className="spotlight-title">
+                    {currentSpotlight.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="spotlight-desc">
+                    {currentSpotlight.description}
+                  </p>
+
+                  {/* Meta Row: Location & Date */}
+                  <div className="spotlight-meta-row">
+                    <div className="spotlight-meta-item">
+                      <MapPin size={17} color="var(--primary)" />
+                      <span>{currentSpotlight.location || 'Campus Center'}</span>
+                    </div>
+                    <div className="spotlight-meta-item">
+                      <Calendar size={17} color="var(--text-secondary)" />
+                      <span>
+                        {new Date(currentSpotlight.date || currentSpotlight.createdAt).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Reporter Profile & View Action Button */}
+                <div className="spotlight-footer-row">
+                  <div className="spotlight-reporter-box">
+                    {currentSpotlight.reportedBy?.avatar && !currentSpotlight.reportedBy.avatar.includes('dicebear') ? (
+                      <img
+                        src={currentSpotlight.reportedBy.avatar}
+                        alt={currentSpotlight.reportedBy?.name || 'Reporter'}
+                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="spotlight-reporter-avatar">
+                        {(currentSpotlight.reportedBy?.name || 'Saurabh').trim().charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontWeight: 600, fontSize: '0.96rem', color: 'var(--text-main)' }}>
+                      {currentSpotlight.reportedBy?.name?.split(' ')[0] || 'Saurabh'}
+                    </span>
+                  </div>
+
+                  <Link
+                    to={`/items/${currentSpotlight._id}`}
+                    className="spotlight-view-btn"
+                  >
+                    <span>View</span>
+                    <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+              </div>
             </div>
-          ) : (
-            <>
+          )}
+
+          {/* 4 Stat Metric Cards (Row of 4 Cards from Screenshot) */}
+          <div className="stats-grid-row">
+            {/* Card 1: Lost Items */}
+            <Link to="/browse?type=lost" className="stat-metric-card">
+              <div className="stat-metric-content">
+                <div className="stat-icon-circle lost">
+                  <Search size={20} />
+                </div>
+                <div className="stat-metric-texts">
+                  <span className="stat-metric-label">Lost Items</span>
+                  <span className="stat-metric-value">{stats.activeLost}</span>
+                </div>
+              </div>
+              <ArrowRight size={18} className="stat-metric-arrow" />
+              <div className="stat-card-swoosh lost"></div>
+            </Link>
+
+            {/* Card 2: Found Items */}
+            <Link to="/browse?type=found" className="stat-metric-card">
+              <div className="stat-metric-content">
+                <div className="stat-icon-circle found">
+                  <PlusCircle size={20} />
+                </div>
+                <div className="stat-metric-texts">
+                  <span className="stat-metric-label">Found Items</span>
+                  <span className="stat-metric-value">{stats.activeFound}</span>
+                </div>
+              </div>
+              <ArrowRight size={18} className="stat-metric-arrow" />
+              <div className="stat-card-swoosh found"></div>
+            </Link>
+
+            {/* Card 3: Total Reports */}
+            <Link to="/browse" className="stat-metric-card">
+              <div className="stat-metric-content">
+                <div className="stat-icon-circle total">
+                  <MapPin size={20} />
+                </div>
+                <div className="stat-metric-texts">
+                  <span className="stat-metric-label">Total Reports</span>
+                  <span className="stat-metric-value">{stats.totalReports}</span>
+                </div>
+              </div>
+              <ArrowRight size={18} className="stat-metric-arrow" />
+              <div className="stat-card-swoosh total"></div>
+            </Link>
+
+            {/* Card 4: Resolved */}
+            <Link to="/browse?status=RETURNED" className="stat-metric-card">
+              <div className="stat-metric-content">
+                <div className="stat-icon-circle resolved">
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="stat-metric-texts">
+                  <span className="stat-metric-label">Resolved</span>
+                  <span className="stat-metric-value">{stats.reunited}</span>
+                </div>
+              </div>
+              <ArrowRight size={18} className="stat-metric-arrow" />
+              <div className="stat-card-swoosh resolved"></div>
+            </Link>
+          </div>
+
+          {/* Centered Glowing Primary CTA Button (Screenshot Center Bottom) */}
+          <div className="cta-center-container">
+            <Link to="/browse" className="cta-browse-btn">
+              <Search size={18} />
+              <span>Browse All Items & Filter</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+
+          {/* Additional Grid of Items */}
+          <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Explore More Reports</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Browse all recently reported items across campus</p>
+              </div>
+              <Link to="/browse" className="btn btn-secondary btn-sm">
+                <span>View All</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <p>Loading items...</p>
+              </div>
+            ) : (
               <div className="items-grid">
-                {filteredItems.map(item => (
+                {filteredItems.slice(0, 6).map(item => (
                   <ItemCard key={item._id} item={item} />
                 ))}
               </div>
+            )}
+          </div>
 
-              <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-                <Link to="/browse" className="btn btn-primary btn-lg">
-                  <span>Browse All Items & Filter</span>
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
-            </>
-          )}
         </div>
       </section>
 
-      {/* How it Works Section */}
+      {/* 3. How Reconnect Works Section */}
       <section style={{ padding: '4rem 0', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-light)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', maxWidth: '650px', margin: '0 auto 3rem auto' }}>
