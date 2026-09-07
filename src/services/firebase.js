@@ -287,6 +287,7 @@ export const createItemInFirestore = async (itemData, user) => {
 
   const newItem = {
     _id: itemId,
+    id: itemId,
     title: (itemData.title || '').trim(),
     type: (itemData.type || 'lost').toLowerCase(),
     category: itemData.category || 'Accessories',
@@ -303,6 +304,7 @@ export const createItemInFirestore = async (itemData, user) => {
       phone: currentUser.phone || ''
     },
     contactPreference: itemData.contactPreference || 'in_app',
+    verificationQuestions: itemData.verificationQuestions || [],
     isDeleted: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -325,6 +327,26 @@ export const createItemInFirestore = async (itemData, user) => {
   return newItem;
 };
 
+// Category sample image fallbacks
+const FALLBACK_CATEGORY_IMAGES = {
+  Electronics: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80',
+  Keys: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&auto=format&fit=crop&q=80',
+  'Wallets & Purses': 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80',
+  Wallets: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80',
+  Documents: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=800&auto=format&fit=crop&q=80',
+  Clothing: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=800&auto=format&fit=crop&q=80',
+  Accessories: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&auto=format&fit=crop&q=80',
+  Others: 'https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=800&auto=format&fit=crop&q=80'
+};
+
+const toEpoch = (dateVal) => {
+  if (!dateVal) return 0;
+  if (typeof dateVal === 'string') return new Date(dateVal).getTime() || 0;
+  if (dateVal.toDate && typeof dateVal.toDate === 'function') return dateVal.toDate().getTime() || 0;
+  if (dateVal.seconds) return dateVal.seconds * 1000;
+  return new Date(dateVal).getTime() || 0;
+};
+
 // 2. Fetch Items from Firestore
 export const getItemsFromFirestore = async (filters = {}) => {
   let items = [];
@@ -333,7 +355,14 @@ export const getItemsFromFirestore = async (filters = {}) => {
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       if (!data.isDeleted) {
-        items.push({ _id: docSnap.id, ...data });
+        const cat = data.category || 'Accessories';
+        const fallbackImg = FALLBACK_CATEGORY_IMAGES[cat] || FALLBACK_CATEGORY_IMAGES.Others;
+        items.push({
+          _id: docSnap.id,
+          id: docSnap.id,
+          ...data,
+          imageUrl: data.imageUrl || fallbackImg
+        });
       }
     });
   } catch (err) {
@@ -345,13 +374,13 @@ export const getItemsFromFirestore = async (filters = {}) => {
   const { search, type, category, status, location, reportedBy } = filters;
 
   if (type && type !== 'all') {
-    items = items.filter(i => i.type === type.toLowerCase());
+    items = items.filter(i => (i.type || '').toLowerCase() === type.toLowerCase());
   }
   if (category && category !== 'all') {
-    items = items.filter(i => i.category === category);
+    items = items.filter(i => (i.category || '').toLowerCase() === category.toLowerCase());
   }
   if (status && status !== 'all') {
-    items = items.filter(i => i.status === status.toUpperCase());
+    items = items.filter(i => (i.status || 'ACTIVE').toUpperCase() === status.toUpperCase());
   }
   if (location && location.trim()) {
     const locLower = location.toLowerCase().trim();
@@ -370,7 +399,7 @@ export const getItemsFromFirestore = async (filters = {}) => {
     );
   }
 
-  items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  items.sort((a, b) => toEpoch(b.createdAt) - toEpoch(a.createdAt));
   return items;
 };
 
@@ -380,11 +409,19 @@ export const getItemByIdFromFirestore = async (id) => {
   try {
     const itemSnap = await getDoc(doc(firestore, "items", id));
     if (itemSnap.exists()) {
-      item = { _id: itemSnap.id, ...itemSnap.data() };
+      const data = itemSnap.data();
+      const cat = data.category || 'Accessories';
+      const fallbackImg = FALLBACK_CATEGORY_IMAGES[cat] || FALLBACK_CATEGORY_IMAGES.Others;
+      item = {
+        _id: itemSnap.id,
+        id: itemSnap.id,
+        ...data,
+        imageUrl: data.imageUrl || fallbackImg
+      };
     }
   } catch (err) {
     const cachedItems = JSON.parse(localStorage.getItem('reconnect_cached_items') || '[]');
-    item = cachedItems.find(i => i._id === id);
+    item = cachedItems.find(i => i._id === id || i.id === id);
   }
 
   if (!item) return null;
@@ -405,10 +442,10 @@ export const updateItemInFirestore = async (id, updates) => {
       updatedAt: new Date().toISOString()
     });
     const updatedSnap = await getDoc(itemRef);
-    return { _id: updatedSnap.id, ...updatedSnap.data() };
+    return { _id: updatedSnap.id, id: updatedSnap.id, ...updatedSnap.data() };
   } catch (err) {
     console.warn("Firestore update error:", err);
-    return { _id: id, ...updates };
+    return { _id: id, id, ...updates };
   }
 };
 
@@ -441,6 +478,7 @@ export const createClaimInFirestore = async (claimData, user) => {
 
   const newClaim = {
     _id: claimId,
+    id: claimId,
     itemId: claimData.itemId,
     itemTitle: itemDetails?.title || 'Reported Item',
     itemType: itemDetails?.type || 'lost',
@@ -450,7 +488,9 @@ export const createClaimInFirestore = async (claimData, user) => {
     claimantEmail: currentUser.email || 'claimant@campus.edu',
     claimantAvatar: currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User',
     claimantPhone: claimData.contactPhone || currentUser.phone || '',
-    message: claimData.message,
+    message: claimData.message || '',
+    answers: Array.isArray(claimData.answers) ? claimData.answers : [],
+    statedLocation: claimData.statedLocation || '',
     status: 'PENDING',
     createdAt: new Date().toISOString()
   };

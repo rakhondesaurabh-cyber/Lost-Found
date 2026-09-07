@@ -272,6 +272,26 @@ export default function ItemDetails() {
               </div>
             ) : (
               <div>
+                {!isLost && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    marginBottom: '0.9rem',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: '#F3E8FF',
+                    border: '1px solid #D8B4FE',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#7E22CE'
+                  }}>
+                    <Lock size={14} />
+                    <span>Finder Verification Active: Answer question to claim</span>
+                  </div>
+                )}
+
                 <button
                   onClick={() => {
                     if (!user) {
@@ -282,15 +302,24 @@ export default function ItemDetails() {
                     setShowClaimModal(true);
                   }}
                   className="btn btn-primary btn-lg"
-                  style={{ width: '100%', fontSize: '1.1rem' }}
+                  style={{ width: '100%', fontSize: '1.08rem' }}
                 >
-                  <Sparkles size={20} />
-                  <span>
-                    {isLost ? '🤝 I Found This Item — Connect with Owner' : '🙋 This is Mine — Send Claim Request'}
-                  </span>
+                  {isLost ? (
+                    <>
+                      <Send size={19} />
+                      <span>🤝 I Found This Item — Notify Owner</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={19} />
+                      <span>🔐 This is Mine — Answer Verification Question</span>
+                    </>
+                  )}
                 </button>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '0.6rem' }}>
-                  A verification message will be sent to {item.reportedBy?.name} to verify ownership safely.
+                  {isLost
+                    ? 'Let the owner know where and how they can collect their lost belongings.'
+                    : "The finder has asked a question to verify that this item belongs to you before returning it."}
                 </p>
               </div>
             )}

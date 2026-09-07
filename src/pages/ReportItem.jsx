@@ -19,8 +19,43 @@ import {
   Phone,
   Image as ImageIcon,
   UploadCloud,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Key,
+  Shield,
+  HelpCircle,
+  Trash2,
+  Plus,
+  ShieldAlert
 } from 'lucide-react';
+
+const VERIFICATION_PRESETS = [
+  {
+    label: "📱 Wallpaper / Lock Screen",
+    question: "What is the wallpaper / lock screen on this device?",
+    hint: "e.g., photo of mountain / sunset / abstract pattern"
+  },
+  {
+    label: "🎨 Case / Cover Color & Type",
+    question: "What color and type of case or cover is on the item?",
+    hint: "e.g., transparent silicone / black leather folio"
+  },
+  {
+    label: "🔍 Distinct Scratch / Mark",
+    question: "Where is a distinct scratch, dent, or sticker located?",
+    hint: "e.g., small scratch near top-right corner / apple sticker"
+  },
+  {
+    label: "💳 Cards / Items Inside",
+    question: "What specific items or cards are inside the wallet or pouch?",
+    hint: "e.g., specific ID card name, currency, keychains"
+  },
+  {
+    label: "🏷️ Last 4 Digits of Serial / PRN",
+    question: "What are the last 4 digits of the ID / Serial / PRN number?",
+    hint: "e.g., 2024"
+  }
+];
 
 const PRESET_SAMPLE_IMAGES = {
   Accessories: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80",
@@ -48,6 +83,16 @@ export default function ReportItem() {
   const [contactPreference, setContactPreference] = useState('in_app');
   const [submitting, setSubmitting] = useState(false);
 
+  // Private Verification Questions (Anti-Fake Claim Detection)
+  const [verificationQuestions, setVerificationQuestions] = useState([
+    {
+      id: 'vq_1',
+      question: initialType === 'found' ? 'What color/type of case or distinct mark does this item have?' : 'What unique identifying detail does this item have?',
+      secretAnswer: '',
+      hint: 'e.g. transparent case / scratch on corner'
+    }
+  ]);
+
   // Live match radar state
   const [liveMatches, setLiveMatches] = useState([]);
   const [checkingMatches, setCheckingMatches] = useState(false);
@@ -55,6 +100,82 @@ export default function ReportItem() {
   const { user } = useAuth();
   const { addToast } = useNotification();
   const navigate = useNavigate();
+
+  const addPresetQuestion = (preset) => {
+    const existing = verificationQuestions.find(q => q.question.toLowerCase() === preset.question.toLowerCase());
+    if (existing) {
+      addToast('Question already added to your verification list', 'info');
+      return;
+    }
+    setVerificationQuestions(prev => [
+      ...prev,
+      {
+        id: `vq_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+        question: preset.question,
+        secretAnswer: '',
+        hint: preset.hint || ''
+      }
+    ]);
+    addToast(`Added question: "${preset.label}"`, 'success');
+  };
+
+  const addCustomQuestion = () => {
+    setVerificationQuestions(prev => [
+      ...prev,
+      {
+        id: `vq_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+        question: '',
+        secretAnswer: '',
+        hint: ''
+      }
+    ]);
+  };
+
+  const updateQuestion = (id, field, value) => {
+    setVerificationQuestions(prev =>
+      prev.map(q => q.id === id ? { ...q, [field]: value } : q)
+    );
+  };
+
+  const [generatingAiQuestions, setGeneratingAiQuestions] = useState(false);
+
+  const handleGenerateWithAi = async () => {
+    if (!title.trim() && !description.trim()) {
+      addToast('Please enter an item Title or Description first so AI can analyze it', 'info');
+      return;
+    }
+    setGeneratingAiQuestions(true);
+    try {
+      const generated = await api.generateAIQuestions({
+        title,
+        category,
+        description,
+        location,
+        type
+      });
+      if (Array.isArray(generated) && generated.length > 0) {
+        setVerificationQuestions(prev => [
+          ...prev,
+          ...generated.map(g => ({
+            id: g.id || `vq_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+            question: g.question,
+            secretAnswer: '',
+            hint: g.hint || '',
+            isAiGenerated: true
+          }))
+        ]);
+        addToast(`Generated ${generated.length} verification questions with Gemini AI!`, 'success');
+      }
+    } catch (err) {
+      addToast('Failed to generate questions with AI: ' + err.message, 'error');
+    } finally {
+      setGeneratingAiQuestions(false);
+    }
+  };
+
+  const removeQuestion = (id) => {
+    setVerificationQuestions(prev => prev.filter(q => q.id !== id));
+  };
 
   // Debounced live match detection
   useEffect(() => {
@@ -125,6 +246,10 @@ export default function ReportItem() {
     setSubmitting(true);
     try {
       const finalImage = imageUrl.trim() || PRESET_SAMPLE_IMAGES[category] || PRESET_SAMPLE_IMAGES.Others;
+      
+      // Filter out empty questions (only found items have verification questions)
+      const validVerificationQuestions = isLost ? [] : verificationQuestions.filter(q => q.question.trim() !== '');
+
       const res = await api.createItem({
         title: title.trim(),
         type,
@@ -133,7 +258,8 @@ export default function ReportItem() {
         location: location.trim(),
         date: date || new Date().toISOString().split('T')[0],
         imageUrl: finalImage,
-        contactPreference
+        contactPreference,
+        verificationQuestions: validVerificationQuestions
       });
 
       if (res && res.success) {
@@ -506,6 +632,227 @@ export default function ReportItem() {
             </label>
           </div>
         </div>
+
+        {/* 🔐 One-Way Verification Questions: Only the person posting a found item asks the question */}
+        {!isLost && (
+          <div style={{
+            marginTop: '2rem',
+            padding: '1.5rem',
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            border: '1.5px solid #CBD5E1',
+            borderRadius: 'var(--radius-lg)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: '#4F46E5',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Lock size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E293B' }}>
+                    🛡️ Ask Ownership Verification Question
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                    As the finder, set a question that only the true owner can answer before you return the item.
+                  </p>
+                </div>
+              </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleGenerateWithAi}
+                disabled={generatingAiQuestions}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  gap: '0.35rem',
+                  fontSize: '0.82rem',
+                  background: 'linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%)',
+                  borderColor: '#D8B4FE',
+                  color: '#7E22CE',
+                  fontWeight: 700
+                }}
+              >
+                <Sparkles size={14} className={generatingAiQuestions ? 'spin' : ''} />
+                <span>{generatingAiQuestions ? 'Generating...' : '✨ Generate with Gemini AI'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={addCustomQuestion}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: '0.35rem', fontSize: '0.82rem' }}
+              >
+                <Plus size={15} />
+                <span>Add Custom Question</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Preset question helper chips */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.45rem' }}>
+              Quick Preset Question Templates (Click to add):
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {VERIFICATION_PRESETS.map((preset, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => addPresetQuestion(preset)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: '#334155',
+                    cursor: 'pointer',
+                    transition: 'var(--transition)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#4F46E5';
+                    e.currentTarget.style.color = '#4F46E5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#CBD5E1';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  <Plus size={12} />
+                  <span>{preset.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Questions List */}
+          {verificationQuestions.length === 0 ? (
+            <div style={{
+              background: '#FFFFFF',
+              padding: '1.25rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px dashed #CBD5E1',
+              textAlign: 'center',
+              color: '#64748B',
+              fontSize: '0.88rem'
+            }}>
+              <p>No verification questions added yet. Click a preset above or add a custom question to protect your report from fake claims.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {verificationQuestions.map((q, idx) => (
+                <div
+                  key={q.id}
+                  style={{
+                    background: '#FFFFFF',
+                    padding: '1.15rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, fontSize: '0.88rem', color: '#1E293B' }}>
+                      <span style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#EEF2FF',
+                        color: '#4F46E5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 800
+                      }}>
+                        {idx + 1}
+                      </span>
+                      <span>Verification Question #{idx + 1}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(q.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94A3B8',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.78rem'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. What is the wallpaper image or phone case color?"
+                        value={q.question}
+                        onChange={(e) => updateQuestion(q.id, 'question', e.target.value)}
+                        style={{ fontSize: '0.9rem', padding: '0.55rem 0.8rem' }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.75rem' }}>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Secret Expected Answer (e.g. Mountain / Transparent case)"
+                          value={q.secretAnswer}
+                          onChange={(e) => updateQuestion(q.id, 'secretAnswer', e.target.value)}
+                          style={{
+                            fontSize: '0.88rem',
+                            padding: '0.55rem 0.8rem 0.55rem 2.2rem',
+                            border: '1.5px solid #818CF8',
+                            background: '#F8FAFC'
+                          }}
+                        />
+                        <Key size={14} color="#4F46E5" style={{ position: 'absolute', left: '10px', top: '12px' }} />
+                      </div>
+
+                      <div>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Optional public hint (e.g. nature / pattern)"
+                          value={q.hint}
+                          onChange={(e) => updateQuestion(q.id, 'hint', e.target.value)}
+                          style={{ fontSize: '0.88rem', padding: '0.55rem 0.8rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
         {/* Submit Button */}
         <div style={{ marginTop: '2rem' }}>

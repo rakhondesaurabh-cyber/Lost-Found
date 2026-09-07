@@ -170,6 +170,24 @@ class Database {
     return db.claims[idx];
   }
 
+  // Helper to sanitize item (hide private verification secrets from non-owners)
+  sanitizeItem(item, requestingUserId = null) {
+    if (!item) return null;
+    const isOwner = requestingUserId && item.reportedBy && item.reportedBy._id === requestingUserId;
+    if (isOwner) return item;
+
+    // Redact secretAnswer from verification questions for non-owners
+    const sanitized = { ...item };
+    if (Array.isArray(sanitized.verificationQuestions)) {
+      sanitized.verificationQuestions = sanitized.verificationQuestions.map(q => ({
+        id: q.id || q._id,
+        question: q.question,
+        hint: q.hint || ''
+      }));
+    }
+    return sanitized;
+  }
+
   // Smart Matching Engine
   findMatchesForItem(item) {
     const db = this.read();
@@ -232,3 +250,4 @@ class Database {
 }
 
 export const db = new Database();
+

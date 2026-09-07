@@ -3,10 +3,10 @@ import { db } from '../config/db.js';
 
 export const createClaim = (req, res) => {
   try {
-    const { itemId, message, contactPhone } = req.body;
+    const { itemId, message, contactPhone, answers, statedLocation } = req.body;
 
-    if (!itemId || !message) {
-      return res.status(400).json({ success: false, message: 'Item ID and verification message are required' });
+    if (!itemId || (!message && (!answers || answers.length === 0))) {
+      return res.status(400).json({ success: false, message: 'Item ID and verification answers/message are required' });
     }
 
     const item = db.getItemById(itemId);
@@ -42,7 +42,9 @@ export const createClaim = (req, res) => {
       ownerId: item.reportedBy._id,
       ownerName: item.reportedBy.name,
       ownerEmail: item.reportedBy.email,
-      message: message.trim(),
+      message: (message || '').trim(),
+      answers: Array.isArray(answers) ? answers : [],
+      statedLocation: (statedLocation || '').trim(),
       status: 'PENDING', // PENDING | ACCEPTED | REJECTED
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -52,7 +54,7 @@ export const createClaim = (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Claim request sent to the owner successfully! They will review your verification details.',
+      message: 'Claim request with verification answers submitted! The reporter will review your answers.',
       claim: newClaim
     });
   } catch (error) {
