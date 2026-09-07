@@ -105,7 +105,7 @@ export default function ItemDetails() {
       {/* Back button & share */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/browse')}
           className="btn btn-secondary btn-sm"
           style={{ gap: '0.4rem' }}
         >

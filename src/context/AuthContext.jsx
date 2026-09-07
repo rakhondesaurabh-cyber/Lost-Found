@@ -61,12 +61,17 @@ export const AuthProvider = ({ children }) => {
       setUser(fbUser);
       setToken(fbUser._id);
 
-      // Attempt optional backend sync in background without blocking
+      // Attempt optional backend sync to acquire JWT token
       api.googleAuth({
         email: fbUser.email,
         name: fbUser.name,
         avatar: fbUser.avatar,
         googleId: fbUser._id
+      }).then(res => {
+        if (res && res.success && res.token) {
+          localStorage.setItem('reconnect_token', res.token);
+          setToken(res.token);
+        }
       }).catch(() => {});
 
       return { success: true, user: fbUser };
@@ -101,13 +106,18 @@ export const AuthProvider = ({ children }) => {
       setUser(fbUser);
       setToken(fbUser._id);
 
-      // Attempt background backend sync
+      // Attempt background backend sync to acquire JWT token
       api.googleAuth({
         email: fbUser.email,
         name: fbUser.name,
         avatar: fbUser.avatar,
         phone: userData.phone,
         googleId: fbUser._id
+      }).then(res => {
+        if (res && res.success && res.token) {
+          localStorage.setItem('reconnect_token', res.token);
+          setToken(res.token);
+        }
       }).catch(() => {});
 
       return { success: true, user: fbUser };
@@ -133,12 +143,17 @@ export const AuthProvider = ({ children }) => {
       setUser(fbUser);
       setToken(fbUser._id);
 
-      // Attempt background backend sync
+      // Attempt background backend sync to acquire JWT token
       api.googleAuth({
         email: fbUser.email,
         name: fbUser.name,
         avatar: fbUser.avatar,
         googleId: fbUser._id
+      }).then(res => {
+        if (res && res.success && res.token) {
+          localStorage.setItem('reconnect_token', res.token);
+          setToken(res.token);
+        }
       }).catch(() => {});
 
       return { success: true, user: fbUser };

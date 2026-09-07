@@ -156,6 +156,7 @@ export const api = {
 
   // Items API with 100% Firebase Firestore fallback
   async getItems(params = {}) {
+    let backendItems = [];
     try {
       const query = new URLSearchParams();
       Object.entries(params).forEach(([key, val]) => {
@@ -164,11 +165,22 @@ export const api = {
         }
       });
       const res = await fetch(`${API_BASE}/items?${query.toString()}`);
-      return await handleResponse(res);
+      const data = await handleResponse(res);
+      backendItems = data.items || [];
     } catch (err) {
-      console.warn("Backend items unreachable, fetching directly from Firestore:", err.message);
-      const items = await getItemsFromFirestore(params);
-      return { success: true, count: items.length, items };
+      console.warn("Backend items unreachable:", err.message);
+    }
+    
+    try {
+      const fbItems = await getItemsFromFirestore(params);
+      // Merge items from both sources and remove duplicates based on _id
+      const allItems = [...backendItems, ...fbItems];
+      const uniqueItems = Array.from(new Map(allItems.map(item => [item._id, item])).values());
+      uniqueItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return { success: true, count: uniqueItems.length, items: uniqueItems };
+    } catch (err) {
+      console.warn("Firestore fallback failed:", err.message);
+      return { success: true, count: backendItems.length, items: backendItems };
     }
   },
 
@@ -314,16 +326,36 @@ export const api = {
   },
 
   async getMyClaims() {
+    let backendClaims = { received: [], sent: [] };
     try {
       const res = await fetch(`${API_BASE}/claims/my-claims`, {
         headers: getHeaders(true)
       });
-      return await handleResponse(res);
+      const data = await handleResponse(res);
+      if (data.claims) backendClaims = data.claims;
     } catch (err) {
-      console.warn("Backend getMyClaims unreachable, fetching from Firestore:", err.message);
+      console.warn("Backend getMyClaims unreachable:", err.message);
+    }
+    
+    try {
       const user = getCurrentUser();
-      const claims = await getClaimsFromFirestore(user);
-      return { success: true, claims };
+      const fbClaims = await getClaimsFromFirestore(user);
+      
+      const mergeArrays = (arr1, arr2) => {
+        const merged = [...arr1, ...arr2];
+        const unique = Array.from(new Map(merged.map(c => [c._id, c])).values());
+        return unique.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      };
+      
+      return {
+        success: true,
+        claims: {
+          received: mergeArrays(backendClaims.received, fbClaims.received),
+          sent: mergeArrays(backendClaims.sent, fbClaims.sent)
+        }
+      };
+    } catch (err) {
+      return { success: true, claims: backendClaims };
     }
   },
 

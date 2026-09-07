@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import MyClaims from './pages/MyClaims';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import NotFound from './pages/NotFound';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -84,7 +85,7 @@ function AppContent() {
             />
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </main>

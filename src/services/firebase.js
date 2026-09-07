@@ -282,7 +282,7 @@ export const uploadImageToFirebase = async (file) => {
 
 // 1. Create Item directly in Firestore
 export const createItemInFirestore = async (itemData, user) => {
-  const itemId = `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const itemId = itemData._id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const currentUser = user || JSON.parse(localStorage.getItem('reconnect_user') || '{}');
 
   const newItem = {
@@ -430,7 +430,7 @@ export const deleteItemInFirestore = async (id) => {
 // 6. Create Claim in Firestore
 export const createClaimInFirestore = async (claimData, user) => {
   const currentUser = user || JSON.parse(localStorage.getItem('reconnect_user') || '{}');
-  const claimId = `claim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const claimId = claimData._id || `claim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
   // Fetch item details
   let itemDetails = null;
