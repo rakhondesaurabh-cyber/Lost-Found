@@ -37,3 +37,12 @@ Thumbs.db
 .system_generated/
 .turbo
 .cache
+
+# Android
+android/local.properties
+android/app/build/
+android/.gradle/
+android/build/
+*.apk
+*.aab
+

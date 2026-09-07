@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -17,6 +17,25 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 export default function App() {
+  useEffect(() => {
+    // Safely initialize Capacitor Native UI when running on Android
+    const initCapacitor = async () => {
+      try {
+        if (window?.Capacitor?.isNativePlatform?.()) {
+          const { StatusBar, Style } = await import('@capacitor/status-bar');
+          const { SplashScreen } = await import('@capacitor/splash-screen');
+          
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: '#FAF9F6' });
+          await SplashScreen.hide();
+        }
+      } catch (err) {
+        // Ignore in standard web browser
+      }
+    };
+    initCapacitor();
+  }, []);
+
   return (
     <AuthProvider>
       <NotificationProvider>

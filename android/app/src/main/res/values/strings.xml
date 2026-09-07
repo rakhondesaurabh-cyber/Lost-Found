@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Reconnect</string>
+    <string name="title_activity_main">Reconnect</string>
+    <string name="package_name">com.reconnect.lostfound</string>
+    <string name="custom_url_scheme">com.reconnect.lostfound</string>
+</resources>

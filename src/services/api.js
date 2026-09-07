@@ -1,4 +1,29 @@
-const API_BASE = '/api';
+// Smart API base resolver supporting Web, Capacitor Android (Emulator & Physical Device), and Custom Server URL
+const getApiBase = () => {
+  // 1. Check custom override from localStorage if user configured server IP
+  const customUrl = localStorage.getItem('reconnect_custom_api');
+  if (customUrl) return customUrl.replace(/\/+$/, '');
+
+  // 2. Check Vite build env
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+  }
+
+  // 3. Detect Capacitor Native Android Platform
+  const isCapacitor = window?.Capacitor?.isNativePlatform?.() || 
+                      window.location.protocol === 'capacitor:' || 
+                      (window.location.hostname === 'localhost' && !window.location.port);
+  
+  if (isCapacitor) {
+    // Android Emulator default loopback alias to host machine port 5001
+    return 'http://10.0.2.2:5001/api';
+  }
+
+  // 4. Default for Web development / production
+  return '/api';
+};
+
+export const API_BASE = getApiBase();
 
 const getHeaders = (includeAuth = true) => {
   const headers = {
