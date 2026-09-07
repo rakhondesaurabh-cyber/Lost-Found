@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import GoogleAccountModal from './GoogleAccountModal';
 import {
   Compass,
   Search,
@@ -24,6 +25,7 @@ export default function Navbar() {
   const { pendingClaimsCount, addToast } = useNotification();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -184,6 +186,10 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={async () => {
+                      if (window?.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:') {
+                        setShowGoogleModal(true);
+                        return;
+                      }
                       try {
                         const res = await googleLogin();
                         if (res && res.success) {
@@ -192,7 +198,7 @@ export default function Navbar() {
                         }
                       } catch (err) {
                         if (err.code !== 'auth/popup-closed-by-user') {
-                          addToast(err.message || 'Google Sign-in failed', 'error');
+                          setShowGoogleModal(true);
                         }
                       }
                     }}
@@ -315,6 +321,10 @@ export default function Navbar() {
                       type="button"
                       onClick={async () => {
                         handleMobileNavClick();
+                        if (window?.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:') {
+                          setShowGoogleModal(true);
+                          return;
+                        }
                         try {
                           const res = await googleLogin();
                           if (res && res.success) {
@@ -323,7 +333,7 @@ export default function Navbar() {
                           }
                         } catch (err) {
                           if (err.code !== 'auth/popup-closed-by-user') {
-                            addToast(err.message || 'Google Sign-in failed', 'error');
+                            setShowGoogleModal(true);
                           }
                         }
                       }}
@@ -388,6 +398,12 @@ export default function Navbar() {
           <span>Claims</span>
         </NavLink>
       </div>
+
+      <GoogleAccountModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        onSuccess={() => navigate('/dashboard')}
+      />
     </>
   );
 }

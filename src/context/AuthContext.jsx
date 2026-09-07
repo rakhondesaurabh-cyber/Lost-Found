@@ -125,9 +125,9 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (fallbackData = null) => {
     try {
-      const fbUser = await signInWithGoogle();
+      const fbUser = await signInWithGoogle(fallbackData);
       localStorage.setItem('reconnect_user', JSON.stringify(fbUser));
       localStorage.setItem('reconnect_token', fbUser._id);
       setUser(fbUser);

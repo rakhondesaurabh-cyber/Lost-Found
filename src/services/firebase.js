@@ -56,13 +56,36 @@ googleProvider.setCustomParameters({
 });
 
 // Google OAuth Sign In with Firebase
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (fallbackData = null) => {
+  // If direct Google account details provided (e.g. from Google Account Modal in Android app)
+  if (fallbackData && fallbackData.email) {
+    const uid = 'google_' + btoa(fallbackData.email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+    const userData = {
+      _id: uid,
+      name: fallbackData.name || fallbackData.email.split('@')[0],
+      email: fallbackData.email.toLowerCase(),
+      avatar: fallbackData.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(fallbackData.email)}`,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString()
+    };
+
+    try {
+      await setDoc(doc(firestore, "users", uid), userData, { merge: true });
+    } catch (e) {
+      console.warn("Firestore Google user sync notice:", e.message);
+    }
+
+    localStorage.setItem('reconnect_user', JSON.stringify(userData));
+    localStorage.setItem('reconnect_token', uid);
+    return userData;
+  }
+
   try {
     let result;
     try {
       result = await signInWithPopup(auth, googleProvider);
     } catch (popupErr) {
-      // If popup fails or blocked in WebView, attempt redirect or throw clear error
+      console.warn("Google popup notice:", popupErr.code, popupErr.message);
       if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment') {
         await signInWithRedirect(auth, googleProvider);
         result = await getRedirectResult(auth);

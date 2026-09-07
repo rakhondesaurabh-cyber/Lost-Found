@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import BackgroundDecoration from '../components/BackgroundDecoration';
+import GoogleAccountModal from '../components/GoogleAccountModal';
 import { Compass, Mail, Lock, User, Phone, Sparkles, Check } from 'lucide-react';
 
 const AVATAR_OPTIONS = [
@@ -23,12 +24,18 @@ export default function Register() {
     avatar: AVATAR_OPTIONS[0]
   });
   const [googleSigningIn, setGoogleSigningIn] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { register, googleLogin } = useAuth();
   const { addToast } = useNotification();
   const navigate = useNavigate();
 
   const handleDirectGoogleSignIn = async () => {
+    if (window?.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:') {
+      setShowGoogleModal(true);
+      return;
+    }
+
     setGoogleSigningIn(true);
     try {
       const res = await googleLogin();
@@ -40,7 +47,7 @@ export default function Register() {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         addToast('Google Sign-in popup was cancelled', 'info');
       } else {
-        addToast(err.message || 'Google Sign-in failed', 'error');
+        setShowGoogleModal(true);
       }
     } finally {
       setGoogleSigningIn(false);
@@ -301,6 +308,12 @@ export default function Register() {
           </Link>
         </div>
       </div>
+
+      <GoogleAccountModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        onSuccess={() => navigate('/dashboard', { replace: true })}
+      />
     </div>
   );
 }

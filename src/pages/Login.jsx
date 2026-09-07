@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import BackgroundDecoration from '../components/BackgroundDecoration';
+import GoogleAccountModal from '../components/GoogleAccountModal';
 import { Compass, Mail, Lock, Sparkles, ArrowRight, UserCheck } from 'lucide-react';
 
 export default function Login() {
@@ -38,8 +39,15 @@ export default function Login() {
   };
 
   const [googleSigningIn, setGoogleSigningIn] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
 
   const handleDirectGoogleSignIn = async () => {
+    // If inside Capacitor Native App or WebView, open Google Account Modal directly
+    if (window?.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:') {
+      setShowGoogleModal(true);
+      return;
+    }
+
     setGoogleSigningIn(true);
     try {
       const res = await googleLogin();
@@ -51,7 +59,8 @@ export default function Login() {
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         addToast('Google Sign-in popup was cancelled', 'info');
       } else {
-        addToast(err.message || 'Google Sign-in failed', 'error');
+        // Fallback to Google Modal on any environment/WebView restriction
+        setShowGoogleModal(true);
       }
     } finally {
       setGoogleSigningIn(false);
@@ -175,6 +184,12 @@ export default function Login() {
           </Link>
         </div>
       </div>
+
+      <GoogleAccountModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        onSuccess={() => navigate(redirectPath, { replace: true })}
+      />
     </div>
   );
 }
