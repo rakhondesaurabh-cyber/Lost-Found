@@ -39,6 +39,16 @@
       "phone": "",
       "googleId": "gPkml4uBFvbfrl76n657PiOW3JX2",
       "createdAt": "2026-09-07T11:52:24.306Z"
+    },
+    {
+      "_id": "user_g_d5c4e381",
+      "name": "Lakshit Singh",
+      "email": "lakshit0507@gmail.com",
+      "password": "$2a$10$google_oauth_authorized_account_placeholder_hash",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJGszHe0EIaPzPWCh5BG9jOF8rXu3LuJnXngJXBCCKFXTD90rjv=s96-c",
+      "phone": "",
+      "googleId": "eUTcRlOgvbMWzyMVX8SnjXyWYtQ2",
+      "createdAt": "2026-09-07T12:36:40.705Z"
     }
   ],
   "items": [
