@@ -14,18 +14,17 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
   
   const hasItemQuestions = Array.isArray(item?.verificationQuestions) && item.verificationQuestions.length > 0;
   
-  // Verification questions are only relevant for FOUND items
+  // Verification questions apply to both FOUND and LOST items
   const [questions, setQuestions] = useState(hasItemQuestions ? item.verificationQuestions : []);
-  const [loadingAi, setLoadingAi] = useState(isFoundItem && !hasItemQuestions);
+  const [loadingAi, setLoadingAi] = useState(!hasItemQuestions);
   const [answers, setAnswers] = useState({});
   const [message, setMessage] = useState('');
   const [statedLocation, setStatedLocation] = useState('');
   const [phone, setPhone] = useState(user?.phone || '');
   const [submitting, setSubmitting] = useState(false);
 
-  // If item was FOUND by reporter and had no questions, generate 1 smart question with AI
+  // Generate 1 smart question with AI if no questions were provided
   const loadAiQuestions = async () => {
-    if (!isFoundItem) return;
     setLoadingAi(true);
     try {
       const generated = await api.generateAIQuestions({
@@ -33,7 +32,7 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
         category: item.category,
         description: item.description,
         location: item.location,
-        type: 'found'
+        type: item.type
       });
 
       if (Array.isArray(generated) && generated.length > 0) {
@@ -43,6 +42,13 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
           initAnswers[q.id || q._id] = '';
         });
         setAnswers(initAnswers);
+
+        // Save generated questions to the database for this item
+        try {
+          await api.updateItem(item._id, { verificationQuestions: generated });
+        } catch (err) {
+          console.warn('Failed to save AI questions to item:', err);
+        }
       }
     } catch (err) {
       console.error('Failed to load AI questions:', err);
@@ -52,16 +58,14 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
   };
 
   useEffect(() => {
-    if (isFoundItem) {
-      if (!hasItemQuestions) {
-        loadAiQuestions();
-      } else {
-        const initAnswers = {};
-        item.verificationQuestions.forEach(q => {
-          initAnswers[q.id || q._id] = '';
-        });
-        setAnswers(initAnswers);
-      }
+    if (!hasItemQuestions) {
+      loadAiQuestions();
+    } else {
+      const initAnswers = {};
+      item.verificationQuestions.forEach(q => {
+        initAnswers[q.id || q._id] = '';
+      });
+      setAnswers(initAnswers);
     }
   }, [item]);
 
@@ -75,26 +79,38 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // If claiming a FOUND item, require answering the finder's verification question
+    // Require answering the verification question if present
     let structuredAnswers = [];
-    if (isFoundItem) {
-      structuredAnswers = questions.map((q, idx) => ({
-        index: idx,
-        questionId: q.id || q._id,
-        question: q.question,
-        answer: (answers[q.id || q._id] || '').trim(),
-        isAiGenerated: Boolean(q.isAiGenerated)
-      })).filter(a => a.answer !== '');
+    structuredAnswers = questions.map((q, idx) => ({
+      index: idx,
+      questionId: q.id || q._id,
+      question: q.question,
+      answer: (answers[q.id || q._id] || '').trim(),
+      isAiGenerated: Boolean(q.isAiGenerated)
+    })).filter(a => a.answer !== '');
 
-      if (structuredAnswers.length === 0 && !message.trim()) {
-        addToast("Please answer the finder's verification question to prove this item belongs to you", 'error');
-        return;
-      }
-    } else {
-      // Helper returning a LOST item
-      if (!message.trim() && !statedLocation.trim()) {
-        addToast('Please provide details on where you found the item or handover instructions', 'error');
-        return;
+    if (structuredAnswers.length === 0 && questions.length > 0) {
+      addToast(
+        isFoundItem 
+          ? "Please answer the finder's verification question to prove this item belongs to you"
+          : "Please answer the verification question to prove you found this item", 
+        'error'
+      );
+      return;
+    }
+
+    if (isLostItem && !message.trim() && !statedLocation.trim()) {
+      addToast('Please provide details on where you found the item or handover instructions', 'error');
+      return;
+    }
+
+    let finalMessage = message.trim();
+    if (structuredAnswers.length > 0) {
+      const qnaText = structuredAnswers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
+      if (finalMessage) {
+        finalMessage = `${finalMessage}\n\n--- Verification Answers ---\n${qnaText}`;
+      } else {
+        finalMessage = qnaText;
       }
     }
 
@@ -102,9 +118,7 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
     try {
       const res = await api.createClaim({
         itemId: item._id,
-        message: isFoundItem
-          ? (message.trim() || structuredAnswers.map(a => `${a.question}: ${a.answer}`).join('\n'))
-          : message.trim(),
+        message: finalMessage,
         answers: structuredAnswers,
         statedLocation: statedLocation.trim(),
         contactPhone: phone.trim()
@@ -240,85 +254,84 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
               <span>Return Item to Owner:</span>
             </div>
             <p style={{ margin: 0, fontSize: '0.82rem', color: '#137333', lineHeight: '1.45' }}>
-              You found this owner's lost item! Provide details on where you found it and how they can collect it from you.
+              You found this owner's lost item! Answer the verification question accurately to prove you found the correct item, and provide handover details.
             </p>
           </div>
         )}
 
         {/* Claim Form */}
         <form onSubmit={handleSubmit}>
-          {/* If FOUND item, display the Finder's Verification Question(s) */}
-          {isFoundItem && (
-            <>
-              {loadingAi ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '2rem 1rem',
-                  background: 'var(--bg-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px dashed var(--border-hover)',
-                  marginBottom: '1.25rem'
-                }}>
-                  <RefreshCw size={24} className="spin" color="var(--primary)" style={{ marginBottom: '0.65rem' }} />
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                    Loading finder verification questions...
+          {/* Display the Verification Question(s) */}
+          {loadingAi ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem 1rem',
+              background: 'var(--bg-subtle)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px dashed var(--border-hover)',
+              marginBottom: '1.25rem'
+            }}>
+              <RefreshCw size={24} className="spin" color="var(--primary)" style={{ marginBottom: '0.65rem' }} />
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                Loading {isFoundItem ? "finder" : "owner"} verification questions...
+              </div>
+            </div>
+          ) : questions.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.25rem' }}>
+              {questions.map((q, idx) => (
+                <div
+                  key={q.id || q._id || idx}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    padding: '1.1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1.5px solid #FED7AA',
+                    boxShadow: '0 2px 6px rgba(255, 87, 34, 0.04)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      background: '#FFEDE7',
+                      color: '#C2410C',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.74rem',
+                      fontWeight: 800
+                    }}>
+                      <HelpCircle size={12} />
+                      {isFoundItem ? "Finder's Question" : "Owner's Question"} {questions.length > 1 ? idx + 1 : ''}
+                    </span>
                   </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.25rem' }}>
-                  {questions.map((q, idx) => (
-                    <div
-                      key={q.id || q._id || idx}
-                      style={{
-                        background: 'var(--bg-surface)',
-                        padding: '1.1rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1.5px solid #FED7AA',
-                        boxShadow: '0 2px 6px rgba(255, 87, 34, 0.04)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          background: '#FFEDE7',
-                          color: '#C2410C',
-                          padding: '0.25rem 0.65rem',
-                          borderRadius: 'var(--radius-full)',
-                          fontSize: '0.74rem',
-                          fontWeight: 800
-                        }}>
-                          <HelpCircle size={12} />
-                          Finder's Question {questions.length > 1 ? idx + 1 : ''}
-                        </span>
-                      </div>
 
-                      <label style={{ display: 'block', fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                        {q.question}
-                      </label>
+                  <label style={{ display: 'block', fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                    {q.question}
+                  </label>
 
-                      {q.hint && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
-                          💡 Hint: {q.hint}
-                        </div>
-                      )}
-
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Type your answer to prove ownership..."
-                        value={answers[q.id || q._id] || ''}
-                        onChange={(e) => handleAnswerChange(q.id || q._id, e.target.value)}
-                        required
-                        style={{ borderColor: answers[q.id || q._id] ? 'var(--primary)' : undefined }}
-                      />
+                  {q.hint && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+                      💡 Hint: {q.hint}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Location Where Owner Lost the Item */}
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder={isFoundItem ? "Type your answer to prove ownership..." : "Type your answer to prove you found it..."}
+                    value={answers[q.id || q._id] || ''}
+                    onChange={(e) => handleAnswerChange(q.id || q._id, e.target.value)}
+                    required
+                    style={{ borderColor: answers[q.id || q._id] ? 'var(--primary)' : undefined }}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Location Where Owner Lost the Item */}
+          {isFoundItem && (
               <div className="form-group">
                 <label className="form-label">Where did you lose this item?</label>
                 <div style={{ position: 'relative' }}>
@@ -333,7 +346,6 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
                   <MapPin size={16} color="var(--primary)" style={{ position: 'absolute', left: '12px', top: '13px' }} />
                 </div>
               </div>
-            </>
           )}
 
           {/* If LOST item, helper provides where they found it */}
@@ -394,10 +406,10 @@ export default function ClaimModal({ item, onClose, onSuccess }) {
             >
               Cancel
             </button>
-            <button
+              <button
               type="submit"
               className="btn btn-primary"
-              disabled={submitting || (isFoundItem && loadingAi)}
+              disabled={submitting || loadingAi}
               style={{ padding: '0.65rem 1.4rem' }}
             >
               {submitting ? (

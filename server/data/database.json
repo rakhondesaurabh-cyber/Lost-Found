@@ -19,6 +19,26 @@
       "phone": "+91 9699794820",
       "googleId": "g83HEFhNiNh6mrDY5SxZ8cRieqy2",
       "createdAt": "2026-09-07T08:55:01.336Z"
+    },
+    {
+      "_id": "user_g_87b59d4a",
+      "name": "Lakshit Singh",
+      "email": "luckycoder07@gmail.com",
+      "password": "$2a$10$google_oauth_authorized_account_placeholder_hash",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLahDKNee_gp4r3EBxilO8DDnhW9lII2M-h-pXI0xY0kc8hXw=s96-c",
+      "phone": "",
+      "googleId": "oLtWMHWOWCfghmpESH61s9Ov7nA2",
+      "createdAt": "2026-09-07T13:02:28.408Z"
+    },
+    {
+      "_id": "user_g_985f4db7",
+      "name": "Lakshit Singh",
+      "email": "lakshit0507@gmail.com",
+      "password": "$2a$10$google_oauth_authorized_account_placeholder_hash",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJGszHe0EIaPzPWCh5BG9jOF8rXu3LuJnXngJXBCCKFXTD90rjv=s96-c",
+      "phone": "",
+      "googleId": "eUTcRlOgvbMWzyMVX8SnjXyWYtQ2",
+      "createdAt": "2026-09-07T13:18:44.361Z"
     }
   ],
   "items": [

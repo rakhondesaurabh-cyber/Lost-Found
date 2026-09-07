@@ -24,7 +24,9 @@ import {
   Clock,
   ExternalLink,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  Send
 } from 'lucide-react';
 
 export default function ItemDetails() {
